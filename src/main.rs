@@ -1,4 +1,4 @@
-use rocket::http::RawStr;
+use rocket::http::{RawStr, Status};
 use rocket::http::uri::Uri;
 use rocket::Request;
 use rocket::response::content::RawJson;
@@ -16,7 +16,7 @@ fn index() -> &'static str {
 }
 
 #[get("/callback?<challenge_code>")]
-fn user_deletion(challenge_code:String) -> rocket::response::content::RawJson<String> {
+fn user_deletion(challenge_code:String) -> EBayResponse {
     let mut hasher = Sha256::new();
 
     hasher.update(challenge_code);
@@ -25,7 +25,7 @@ fn user_deletion(challenge_code:String) -> rocket::response::content::RawJson<St
 
     let response = hasher.finalize();
 
-    return RawJson(serde_json::to_string(&EBayResponse { challengeResponse: String::from_utf8_lossy(&response[..]).parse().unwrap() }).unwrap());
+    return EBayResponse { challengeResponse: String::from_utf8_lossy(&response[..]).parse().unwrap() };
 }
 
 #[post("/callback", format = "application/json", data = "<request>")]
@@ -39,7 +39,8 @@ fn rocket() -> _ {
     rocket::build().mount("/", routes![index, user_deletion, user_deletion_request])
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Responder)]
+#[response(status = 200, content_type = "json")]
 struct EBayResponse {
     pub challengeResponse: String
 }
