@@ -16,7 +16,7 @@ fn index() -> &'static str {
 }
 
 #[get("/callback?<challenge_code>")]
-fn user_deletion(challenge_code:String) -> EBayResponse {
+fn user_deletion(challenge_code:String) -> Json<EBayResponse> {
     let mut hasher = Sha256::new();
 
     hasher.update(challenge_code.as_bytes());
@@ -27,7 +27,7 @@ fn user_deletion(challenge_code:String) -> EBayResponse {
     let bytes = &response[..];
     let hex = hex::encode(bytes);
 
-    return EBayResponse { challengeResponse: hex };
+    return Json(EBayResponse { challengeResponse: hex });
 }
 
 #[post("/callback", format = "application/json", data = "<request>")]
@@ -43,9 +43,11 @@ fn rocket() -> _ {
 
 #[derive(Responder)]
 #[response(status = 200, content_type = "json")]
+#[derive(Serialize, Deserialize)]
 struct EBayResponse {
     pub challengeResponse: String
 }
+
 #[derive(Serialize, Deserialize)]
 struct EbayUserDeletionRequest {
     pub metadata: Metadata,
