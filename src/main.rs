@@ -3,6 +3,7 @@ use rocket::http::uri::Uri;
 use rocket::Request;
 use rocket::response::content::RawJson;
 use rocket::response::status;
+use rocket::serde::json::Json;
 use serde::{Serialize, Deserialize};
 use sha2::{Sha256,Digest};
 use sha2::digest::Mac;
@@ -16,7 +17,6 @@ fn index() -> &'static str {
 
 #[get("/callback?<challenge_code>")]
 fn user_deletion(challenge_code:String) -> rocket::response::content::RawJson<String> {
-
     let mut hasher = Sha256::new();
 
     hasher.update(challenge_code);
@@ -28,14 +28,15 @@ fn user_deletion(challenge_code:String) -> rocket::response::content::RawJson<St
     return RawJson(serde_json::to_string(&EBayResponse { challengeResponse: String::from_utf8_lossy(&response[..]).parse().unwrap() }).unwrap());
 }
 
-#[post("/callback", format = "json", data = "<request>")]
-fn user_deletion_request(request:RawJson<EbayUserDeletionRequest>) -> status::Accepted<String> {
+#[post("/callback", format = "application/json", data = "<request>")]
+fn user_deletion_request(request:Json<EbayUserDeletionRequest>) -> status::Accepted<String> {
+    println!("{}", serde_json::to_string(&request.0).unwrap());
     return status::Accepted(Some("Notification acknowledged!".to_string()))
 }
 
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, user_deletion])
+    rocket::build().mount("/", routes![index, user_deletion, user_deletion_request])
 }
 
 #[derive(Serialize, Deserialize)]
