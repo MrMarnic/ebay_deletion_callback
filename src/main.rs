@@ -19,13 +19,15 @@ fn index() -> &'static str {
 fn user_deletion(challenge_code:String) -> EBayResponse {
     let mut hasher = Sha256::new();
 
-    hasher.update(challenge_code);
-    hasher.update("7683ae4d-87e4-4e82-a415-9def4be3bd70");
-    hasher.update("https://ebay-account-deletion-callback.onrender.com/callback");
+    hasher.update(challenge_code.as_bytes());
+    hasher.update("7683ae4d-87e4-4e82-a415-9def4be3bd70".as_bytes());
+    hasher.update("https://ebay-account-deletion-callback.onrender.com/callback".as_bytes());
 
     let response = hasher.finalize();
+    let bytes = &response[..];
+    let hex = hex::encode(bytes);
 
-    return EBayResponse { challengeResponse: String::from_utf8_lossy(&response[..]).parse().unwrap() };
+    return EBayResponse { challengeResponse: hex };
 }
 
 #[post("/callback", format = "application/json", data = "<request>")]
